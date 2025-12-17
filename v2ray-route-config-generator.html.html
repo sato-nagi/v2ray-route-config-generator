@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2rayN 路由配置工具 V2.0</title>
+    <style>
+        /* 全局美化 */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f2f5; 
+            color: #333; 
+            padding: 30px; 
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: #ffffff; 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #1e88e5; /* 蓝色主题 */
+            margin-bottom: 30px; 
+            font-weight: 600;
+        }
+
+        /* 规则列表区域 */
+        .section-header { 
+            font-size: 1.2em; 
+            font-weight: 600; 
+            margin-top: 25px; 
+            margin-bottom: 15px; 
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        .rule-list { 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            background-color: #f9f9f9;
+        }
+        .rule-row { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 10px; 
+            align-items: center; 
+        }
+        .rule-row input[type="text"], .rule-row select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            flex-grow: 1; 
+            font-size: 1em;
+        }
+        .rule-row select { 
+            flex-grow: 0; 
+            width: 180px; 
+            background-color: white;
+        }
+        .delete-btn { 
+            background-color: #e57373; /* 红色 */
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover { background-color: #d32f2f; }
+        
+        /* 操作按钮 */
+        .action-button { 
+            background-color: #1e88e5; /* 蓝色 */
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 1em;
+            transition: background-color 0.2s;
+            display: block;
+            width: 100%;
+            margin-top: 25px;
+        }
+        .action-button:hover { background-color: #1565c0; }
+        #add-rule-btn { margin-top: 0; }
+
+        /* 默认策略选项 */
+        .default-options { 
+            padding: 20px; 
+            border: 1px solid #bbdefb; 
+            border-radius: 8px; 
+            background-color: #e3f2fd; /* 浅蓝色背景 */
+            margin-top: 20px;
+        }
+        .default-options button { 
+            margin-right: 10px; 
+            padding: 10px 15px; 
+            background-color: #ffb74d; /* 橙色 */
+            color: #333; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+        .default-options button:hover { background-color: #ffa726; }
+        .default-options button.active { 
+            background-color: #1e88e5; 
+            color: white; 
+            border: 2px solid #005cb2;
+        }
+        .policy-text { 
+            margin-top: 10px; 
+            font-size: 0.9em; 
+            color: #0d47a1;
+        }
+
+        /* 输出区域 */
+        .output-area { margin-top: 30px; }
+        .output-actions { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+        }
+        #copy-btn { 
+            background-color: #4db6ac; /* 青绿色 */
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 0.9em; 
+        }
+        #copy-btn:disabled { 
+            background-color: #b0bec5; 
+            cursor: not-allowed; 
+        }
+        textarea { 
+            width: 100%; 
+            height: 250px; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-family: monospace; 
+            font-size: 0.95em;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>V2rayN 路由配置工具 V2.0</h1>
+
+    <div class="section-header">第一步：自定义流量分流规则 (高优先级)</div>
+
+    <div class="rule-list" id="rule-list">
+        </div>
+
+    <button id="add-rule-btn" class="action-button">➕ 添加新规则</button>
+
+    <div class="default-options">
+        <div class="section-header" style="margin-top: 0; padding-bottom: 0;">第二步：未匹配网站的默认策略 (兜底)</div>
+        <div style="margin-top: 10px;">
+            <button id="default-proxy-btn">全部代理</button>
+            <button id="default-direct-btn">全部直连</button>
+            <button id="default-cn-proxy-btn">大陆直连，国外代理</button>
+        </div>
+        <input type="hidden" id="default-policy" value="cn_proxy"> 
+        <div class="policy-text">当前策略: <strong id="current-policy-text">大陆直连，国外代理</strong></div>
+    </div>
+
+    <button id="generate-btn" class="action-button" style="background-color: #4caf50;">⚙️ 生成 JSON 配置</button>
+
+    <div class="output-area">
+        <div class="output-actions">
+            <h3 style="margin: 0; font-size: 1.1em;">生成的 JSON 配置</h3>
+            <button id="copy-btn" disabled>📋 复制 JSON 代码</button>
+        </div>
+
+        <textarea id="output-json" readonly placeholder="点击上方生成按钮，路由配置将显示在这里。"></textarea>
+    </div>
+</div>
+
+<script>
+    // --- 元素引用 ---
+    const ruleList = document.getElementById('rule-list');
+    const addRuleBtn = document.getElementById('add-rule-btn');
+    const generateBtn = document.getElementById('generate-btn');
+    const outputJson = document.getElementById('output-json');
+    const copyBtn = document.getElementById('copy-btn');
+    const defaultPolicyInput = document.getElementById('default-policy');
+    const currentPolicyText = document.getElementById('current-policy-text');
+
+    const defaultProxyBtn = document.getElementById('default-proxy-btn');
+    const defaultDirectBtn = document.getElementById('default-direct-btn');
+    const defaultCnProxyBtn = document.getElementById('default-cn-proxy-btn');
+
+    // --- 核心函数：添加规则输入行 ---
+    function addRuleRow(domain = '', tag = 'proxy') {
+        const row = document.createElement('div');
+        row.className = 'rule-row';
+
+        row.innerHTML = `
+            <input type="text" class="domain-input" placeholder="输入域名 (如: example.com)" value="${domain}">
+            <select class="tag-select">
+                <option value="proxy" ${tag === 'proxy' ? 'selected' : ''}>代理 (Proxy)</option>
+                <option value="direct" ${tag === 'direct' ? 'selected' : ''}>直连 (Direct)</option>
+            </select>
+            <button class="delete-btn">删除</button>
+        `;
+
+        row.querySelector('.delete-btn').addEventListener('click', () => {
+            ruleList.removeChild(row);
+        });
+
+        ruleList.appendChild(row);
+    }
+
+    // --- 核心函数：设置默认策略 (优化了活动状态显示) ---
+    function setDefaultPolicy(policyName, text, activeBtn) {
+        defaultPolicyInput.value = policyName;
+        currentPolicyText.textContent = text;
+        
+        // 移除所有按钮的 active 类
+        [defaultProxyBtn, defaultDirectBtn, defaultCnProxyBtn].forEach(btn => {
+            btn.classList.remove('active');
+        });
+        // 为当前选中的按钮添加 active 类
+        activeBtn.classList.add('active');
+    }
+
+    // --- 核心函数：生成 JSON 规则 (保持逻辑不变，只修改 description) ---
+    function generateRules() {
+        const rows = ruleList.querySelectorAll('.rule-row');
+        let customRules = [];
+        let hasError = false;
+
+        rows.forEach(row => {
+            const domainInput = row.querySelector('.domain-input');
+            const domain = domainInput.value.trim();
+            const tag = row.querySelector('.tag-select').value;
+
+            if (domain === '') {
+                if (rows.length > 0) { 
+                    alert('请删除或填写所有自定义规则的域名！');
+                    domainInput.focus();
+                    hasError = true;
+                }
+                return;
+            }
+
+            customRules.push({
+                "type": "field",
+                "domain": [domain], 
+                "outboundTag": tag 
+            });
+        });
+
+        if (hasError) {
+            outputJson.value = '生成失败，请检查错误提示。';
+            copyBtn.disabled = true;
+            return;
+        }
+
+        const defaultPolicy = defaultPolicyInput.value;
+        const defaultRules = [];
+
+        if (defaultPolicy === 'all_proxy') {
+            defaultRules.push({ "type": "field", "outboundTag": "proxy" });
+        } else if (defaultPolicy === 'all_direct') {
+            defaultRules.push({ "type": "field", "outboundTag": "direct" });
+        } else if (defaultPolicy === 'cn_proxy') {
+            defaultRules.push(
+                { "type": "field", "domain": ["geosite:cn"], "outboundTag": "direct" },
+                { "type": "field", "ip": ["geoip:cn"], "outboundTag": "direct" },
+                { "type": "field", "outboundTag": "proxy" }
+            );
+        }
+
+        const finalConfig = {
+            "version": 1,
+            "description": "自定义路由配置 - V2.0", /* 更新版本号 */
+            "routing": {
+                "domainStrategy": "AsIs",
+                "rules": customRules.concat(defaultRules)
+            }
+        };
+
+        outputJson.value = JSON.stringify(finalConfig, null, 2);
+        copyBtn.disabled = false;
+    }
+    
+    // --- 复制功能 (保持不变) ---
+    async function copyToClipboard() {
+        const textToCopy = outputJson.value;
+        
+        if (!textToCopy) return;
+
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            copyBtn.textContent = '✅ 已复制!';
+            setTimeout(() => { copyBtn.textContent = '📋 复制 JSON 代码'; }, 2000);
+        } catch (err) {
+            outputJson.select();
+            document.execCommand('copy');
+            copyBtn.textContent = '✅ 已复制! (备用)';
+            setTimeout(() => { copyBtn.textContent = '📋 复制 JSON 代码'; }, 2000);
+        }
+    }
+
+    // --- 事件监听器 ---
+    addRuleBtn.addEventListener('click', () => addRuleRow());
+    generateBtn.addEventListener('click', generateRules);
+    copyBtn.addEventListener('click', copyToClipboard);
+
+    defaultProxyBtn.addEventListener('click', () => setDefaultPolicy('all_proxy', '全部代理', defaultProxyBtn));
+    defaultDirectBtn.addEventListener('click', () => setDefaultPolicy('all_direct', '全部直连', defaultDirectBtn));
+    defaultCnProxyBtn.addEventListener('click', () => setDefaultPolicy('cn_proxy', '大陆直连，国外代理', defaultCnProxyBtn));
+
+
+    // 默认加载示例和默认策略
+    addRuleRow('youtube.com', 'proxy');
+    addRuleRow('bing.com', 'direct');
+    setDefaultPolicy('cn_proxy', '大陆直连，国外代理', defaultCnProxyBtn); 
+</script>
+
+</body>
+</html>
