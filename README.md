@@ -17,14 +17,11 @@
 
 ## 🖥️ 如何使用 (How to Use)
 
-### 方式一：在线预览 (推荐)
+### 在线预览 (推荐)
 
-由于本项目是纯前端 $HTML$，您可以直接在任何支持 GitHub Pages 的服务上部署或在本地浏览器中运行 `index.html` 文件。
+[由于本项目是纯前端 $HTML$，您可以直接](https://sato-nagi.github.io/v2ray-route-config-generator/)
 
-### 方式二：本地运行
 
-1.  将 `index.html` 文件下载到您的本地电脑。
-2.  使用任意现代浏览器（如 Chrome, Firefox, Edge）直接打开 `index.html` 文件即可开始使用。
 
 ### 导入 V2rayN 客户端的步骤
 
